@@ -22,8 +22,6 @@ static void	_heapify(int *root, int *next, int *last, heapsort_callback cb)
 	int	*left;
 	int	*right;
 
-
-
 	left = next < last ? next : NULL;
 	right = next + 1 < last ? next + 1 : NULL;
 	next += ((next - root) * 2L);
@@ -31,14 +29,10 @@ static void	_heapify(int *root, int *next, int *last, heapsort_callback cb)
 		_heapify(left, next, last, cb);
 	if (right && next + 1 <= last)
 		_heapify(right, next + 2, last, cb);
-	if (left && cb(*left, *root))
+	if (left && cb(*root, *left))
 		_swap(left, root);
-	if (right && cb(*right, *root))
+	if (right && cb(*root, *right))
 		_swap(right, root);
-
-
-
-
 }
 
 void		_sort(int *arr, size_t size, heapsort_callback cb)
@@ -46,7 +40,7 @@ void		_sort(int *arr, size_t size, heapsort_callback cb)
 	int	*last;
 
 	last = arr + size - 1;
-	if (cb(*arr, *last))
+	if (!cb(*arr, *last))
 	{
 		_swap(arr, last);
 		_heapify(arr, arr + 1, last - 1, cb);
