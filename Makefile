@@ -1,47 +1,58 @@
-
-S := src/
+PWD := $(shell pwd)
 NAME := heapsort
-SS := $(S)$(NAME).c
-H := -I include/
-LIB := lib$(NAME).a
+TARGET := lib$(NAME).so
+
+OBJ_DIR := obj
+SRC_DIR := src
+LIB_DIR := lib
+
+SRC := $(SRC_DIR)/heapsort.c 
+OBJ := $(notdir $(SRC:.c=.o))
+
+
 CC := gcc
-OCF := -O3 -Wall -Wextra -Werror
-GCF := -g -Wall -Wextra -Werror
+CFLAGS := -Wall -Wextra -Werror
+CFLAGS += -I $(PWD)/include/
+
 ifeq ($(shell echo $$DOCKER), 1)
 debug = 1
 endif
+
 ifdef debug
-CF := $(GCF)
+CFLAGS += -g
 else
-CF := $(OCF)
-endif
-ifeq ($(shell echo $$DOCKER), 1)
-TEST = $(CC) $(CF) $(H) -o test.run test/main.c $(LIB)
-else
-TEST = $(CC) $(CF) $(H) -L ./ -l$(NAME) -o test.run test/main.c
+CFLAGS += -O3
 endif
 
-all: $(LIB)
+vpath %.c $(SRC_DIR)
+vpath %.o $(OBJ_DIR)
+vpath %.so $(LIB_DIR)
 
-%.o: %.c
-	$(CC) $(CF) $(H) -c -o $@ $<
+all: $(LIB_DIR) $(OBJ_DIR) $(TARGET)
 
-$(LIB): $(SS:.c=.o)
-	ar rc $(LIB) $(SS:.c=.o) 
+$(OBJ):%.o:%.c
+	$(CC) $(CFLAGS)  -c $< -o $(OBJ_DIR)/$@ 
 	
-test: $(LIB) 
-	$(TEST)
-	./test.run
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -shared -o $(LIB_DIR)/$(TARGET) $(addprefix $(OBJ_DIR)/, $(OBJ)) 
+	
+$(LIB_DIR):
+	$(shell mkdir -p $(LIB_DIR))
+
+$(OBJ_DIR):
+	$(shell mkdir -p $(OBJ_DIR))
+
+test: all
+	make -C cunit test lib=$(NAME) path=$(PWD) lib_dir=$(LIB_DIR)
 
 clean:
-	/bin/rm -f $(SS:.c=.o)
+	/bin/rm -rf $(OBJ_DIR)
 
 fclean: clean
-	/bin/rm -f $(LIB)
-
-tclean: fclean
-	/bin/rm -f test.run test.run.dSYM
+	/bin/rm -rf $(LIB_DIR)
 
 re: fclean all
 
 .PHONY: test
+
+.SILENT: test 

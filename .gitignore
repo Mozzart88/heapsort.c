@@ -3,3 +3,7 @@
 *.run
 *.dSYM
 *.o
+*.so
+lib*
+obj/*
+
